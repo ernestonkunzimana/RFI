@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "nkernest666@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isReferee() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'referee';
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser(data) {
+      return data.uid is string && data.email is string && data.role in ['admin', 'referee', 'manager', 'player', 'ministry'];
+    }
+
+    function isValidMatch(data) {
+      return data.homeTeamId is string && data.awayTeamId is string && data.status in ['pending', 'live', 'completed'];
+    }
+
+    function isValidEvent(data) {
+      return data.matchId is string && data.type in ['goal', 'yellow_card', 'red_card', 'foul', 'substitution'] && data.minute is number;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role != 'admin' || isAdmin());
+      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data) && (request.resource.data.role == resource.data.role || isAdmin());
+    }
+
+    match /teams/{teamId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /players/{playerId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /matches/{matchId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || isReferee();
+    }
+
+    match /events/{eventId} {
+      allow read: if isAuthenticated();
+      allow create: if (isAdmin() || isReferee()) && isValidEvent(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    match /decisions/{decisionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || isReferee();
+    }
+
+    match /discipline/{disciplineId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+    }
+  }
+}

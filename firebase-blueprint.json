@@ -1,0 +1,100 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and roles.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "referee", "manager", "player", "ministry"] },
+        "teamId": { "type": "string", "description": "Optional team association" }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "Team": {
+      "title": "Football Team",
+      "description": "A football club or team.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "location": { "type": "string" }
+      },
+      "required": ["name"]
+    },
+    "Player": {
+      "title": "Football Player",
+      "description": "A registered player.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "teamId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "suspended", "retired"] }
+      },
+      "required": ["name", "teamId", "status"]
+    },
+    "Match": {
+      "title": "Football Match",
+      "description": "A match between two teams.",
+      "type": "object",
+      "properties": {
+        "homeTeamId": { "type": "string" },
+        "awayTeamId": { "type": "string" },
+        "homeScore": { "type": "number" },
+        "awayScore": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "live", "completed"] }
+      },
+      "required": ["homeTeamId", "awayTeamId", "date", "status"]
+    },
+    "MatchEvent": {
+      "title": "Match Event",
+      "description": "An event during a match (goal, card, etc).",
+      "type": "object",
+      "properties": {
+        "matchId": { "type": "string" },
+        "playerId": { "type": "string" },
+        "type": { "type": "string", "enum": ["goal", "yellow_card", "red_card", "foul", "substitution"] },
+        "minute": { "type": "number" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["matchId", "type", "minute"]
+    },
+    "Discipline": {
+      "title": "Disciplinary Record",
+      "description": "Aggregated disciplinary data for a player.",
+      "type": "object",
+      "properties": {
+        "playerId": { "type": "string" },
+        "yellowCards": { "type": "number" },
+        "redCards": { "type": "number" },
+        "suspended": { "type": "boolean" }
+      },
+      "required": ["playerId", "yellowCards", "redCards", "suspended"]
+    },
+    "AuditLog": {
+      "title": "Audit Log",
+      "description": "Record of system actions for accountability.",
+      "type": "object",
+      "properties": {
+        "action": { "type": "string" },
+        "entity": { "type": "string" },
+        "oldValue": { "type": "object" },
+        "newValue": { "type": "object" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" }
+      },
+      "required": ["action", "entity", "timestamp", "userId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "User profiles" },
+    "/teams/{teamId}": { "schema": "Team", "description": "Football teams" },
+    "/players/{playerId}": { "schema": "Player", "description": "Football players" },
+    "/matches/{matchId}": { "schema": "Match", "description": "Football matches" },
+    "/events/{eventId}": { "schema": "MatchEvent", "description": "Match events" },
+    "/discipline/{disciplineId}": { "schema": "Discipline", "description": "Disciplinary records" },
+    "/audit_logs/{logId}": { "schema": "AuditLog", "description": "System audit logs" }
+  }
+}

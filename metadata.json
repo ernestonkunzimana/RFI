@@ -1,0 +1,5 @@
+{
+  "name": "RNFIDS - Rwanda National Football Intelligence & Discipline System",
+  "description": "Centralized national football data system for real-time match reporting, automated disciplinary tracking, and governance.",
+  "requestFramePermissions": []
+}
